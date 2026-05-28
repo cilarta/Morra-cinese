@@ -8,7 +8,6 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Space Grotesk', sans-serif; background: #0d0b14; color: #f0eefa; min-height: 100vh; }
-    .font-display { font-family: 'Orbitron', sans-serif; }
     .card { background: #16121f; border: 1px solid #2a2440; border-radius: 1rem; padding: 1.5rem; }
     .btn { border: none; border-radius: 0.75rem; padding: 0.65rem 1.25rem; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; transition: all 0.2s; }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -25,8 +24,8 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
     .fade-in { animation: fadeIn 0.35s ease both; }
-    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
-    .pulse { animation: pulse 2s infinite; display: inline-block; }
+    @keyframes pulse-anim { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+    .pulse { animation: pulse-anim 2s infinite; display: inline-block; }
     #app { min-height: 100vh; padding: 1.5rem 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     .max-w { max-width: 56rem; width: 100%; }
     .max-w-sm { max-width: 24rem; width: 100%; }
@@ -41,63 +40,34 @@
     .badge-waiting  { background: rgba(251,191,36,0.1);  color: #fbbf24; border-color: rgba(251,191,36,0.3); }
     .badge-eliminated { background: rgba(239,68,68,0.1); color: #ef4444; border-color: rgba(239,68,68,0.3); opacity:.6; }
     .badge-winner   { background: rgba(52,211,153,0.1);  color: #34d399; border-color: rgba(52,211,153,0.3); }
-    .badge-result-win  { background: rgba(52,211,153,0.12); color: #34d399; border-color: rgba(52,211,153,0.3); font-size: 1rem; padding: 0.35rem 1rem; }
-    .badge-result-lose { background: rgba(239,68,68,0.12); color: #ef4444; border-color: rgba(239,68,68,0.3); font-size: 1rem; padding: 0.35rem 1rem; }
-    .badge-result-draw { background: rgba(251,191,36,0.12); color: #fbbf24; border-color: rgba(251,191,36,0.3); font-size: 1rem; padding: 0.35rem 1rem; }
     .controls { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.25rem; }
     .qr-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; margin: 0.5rem 0; }
     .players-list { max-height: 380px; overflow-y: auto; }
     .section-title { font-family: 'Orbitron', sans-serif; font-size: 0.8rem; color: #a89fc0; margin-bottom: 0.75rem; }
     .btn-choice { background: #1e1a2e; border: 2px solid #3b2f5e; border-radius: 1rem; padding: 1rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s; color: #a89fc0; font-size: 0.7rem; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; letter-spacing: 0.08em; }
     .btn-choice:hover:not(:disabled) { border-color: #7c3aed; background: rgba(124,58,237,0.1); transform: translateY(-4px); }
-    .btn-choice:disabled { opacity: 0.4; cursor: not-allowed; }
     .gradient-text { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg,#7c3aed,#34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .loading-center { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
   </style>
 </head>
 <body>
-<div id="app"><div class="spinner"></div></div>
+<div id="app"><div class="loading-center"><div class="spinner"></div></div></div>
 
 <script>
-  const BASE44_APP_URL = "https://arena-morph-play.base44.app";
+  const FUNC_URL = "https://arena-morph-play.base44.app/api/v1/functions/publicGame";
   const GITHUB_URL = "https://cilarta.github.io/Morra-cinese";
 
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get("code") || "";
 
-  // ── SHARED API ────────────────────────────────────────────────
-
-  async function callGame(action, params = {}) {
-    const res = await fetch(`${BASE44_APP_URL}/api/v1/functions/publicGame`, {
+  async function api(action, params = {}) {
+    const res = await fetch(FUNC_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, ...params })
     });
-    if (!res.ok) throw new Error("Errore server");
+    if (!res.ok) throw new Error(`Errore ${res.status}`);
     return res.json();
-  }
-
-  async function apiGet(path) {
-    const res = await fetch(`${BASE44_APP_URL}/api/v1/entities/${path}`, {
-      headers: { "Content-Type": "application/json" }
-    });
-    return res.json();
-  }
-  async function apiPost(path, body) {
-    const res = await fetch(`${BASE44_APP_URL}/api/v1/entities/${path}`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-    return res.json();
-  }
-  async function apiPatch(path, body) {
-    const res = await fetch(`${BASE44_APP_URL}/api/v1/entities/${path}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-    return res.json();
-  }
-  async function apiDelete(path) {
-    await fetch(`${BASE44_APP_URL}/api/v1/entities/${path}`, { method: "DELETE" });
   }
 
   function setApp(html) {
@@ -105,46 +75,38 @@
   }
 
   // ══════════════════════════════════════════════════════════════
-  // HOST MODE  (no ?code param)
+  // HOST MODE
   // ══════════════════════════════════════════════════════════════
-
   const HOST = {
     session: null,
     players: [],
     poll: null,
 
-    render(html) {
-      setApp(`
-        <div class="max-w fade-in">
-          <div style="text-align:center;margin-bottom:2rem">
-            <h1 class="gradient-text" style="font-size:2rem">✊✋✌️ MORRA CINESE</h1>
-            <p style="color:#a89fc0;margin-top:0.3rem;font-size:0.9rem">Torneo a eliminazione • Al meglio di 5</p>
-          </div>
-          ${html}
-        </div>`);
+    wrap(html) {
+      setApp(`<div class="max-w fade-in">
+        <div style="text-align:center;margin-bottom:2rem">
+          <h1 class="gradient-text" style="font-size:2rem">✊✋✌️ MORRA CINESE</h1>
+          <p style="color:#a89fc0;margin-top:0.3rem;font-size:0.9rem">Torneo a eliminazione • Al meglio di 5</p>
+        </div>${html}</div>`);
     },
 
     showStart() {
-      this.render(`
-        <div style="text-align:center">
-          <button class="btn btn-primary" style="font-size:1rem;padding:1rem 2rem" onclick="HOST.createSession()">
-            ⚡ NUOVA PARTITA
-          </button>
-        </div>`);
+      this.wrap(`<div style="text-align:center">
+        <button class="btn btn-primary" style="font-size:1rem;padding:1rem 2rem" onclick="HOST.createSession()">⚡ NUOVA PARTITA</button>
+      </div>`);
     },
 
     showMain() {
       const s = this.session;
       const p = this.players;
-      const currentRound = s.current_round || 1;
-      const stillPlaying = p.filter(x => x.status === 'playing');
+      const cur = s.current_round || 1;
+      const playing = p.filter(x => x.status === 'playing');
       const winner = p.find(x => x.status === 'winner');
-      const roundComplete = s.status === 'playing' && stillPlaying.length === 0 && !winner;
-      const advanced = p.filter(x => x.status === 'waiting' && (x.current_round || 1) > currentRound);
+      const roundComplete = s.status === 'playing' && playing.length === 0 && !winner;
+      const advanced = p.filter(x => x.status === 'waiting' && (x.current_round||1) > cur);
       const joinUrl = `${GITHUB_URL}/?code=${s.code}`;
-      const order = { winner: 0, playing: 1, waiting: 2, eliminated: 3 };
-      const sorted = [...p].sort((a, b) => (order[a.status]||4)-(order[b.status]||4));
-
+      const order = { winner:0, playing:1, waiting:2, eliminated:3 };
+      const sorted = [...p].sort((a,b) => (order[a.status]||4)-(order[b.status]||4));
       const badgeMap = {
         playing:    ['badge-playing',    '⚔️ In gioco'],
         waiting:    ['badge-waiting',    '⏳ In attesa'],
@@ -153,40 +115,34 @@
       };
 
       let left = '';
-
       if (s.status === 'registration') {
-        left += `
-          <div class="card" style="margin-bottom:1.25rem">
-            <div class="section-title">📱 SCANSIONA PER PARTECIPARE</div>
-            <div class="qr-wrap">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(joinUrl)}&bgcolor=ffffff&color=000000&qzone=1"
-                   style="border-radius:0.75rem;background:#fff;padding:0.5rem" width="220" height="220" />
-              <p style="color:#7c3aed;font-family:'Orbitron',sans-serif;font-weight:700;font-size:1.1rem">${s.code}</p>
-              <p style="font-size:0.68rem;color:#a89fc0;word-break:break-all;text-align:center;max-width:240px">${joinUrl}</p>
-            </div>
-          </div>`;
-      }
-
-      if (winner) {
-        left += `
-          <div style="background:linear-gradient(135deg,rgba(52,211,153,0.08),rgba(124,58,237,0.08));border:1px solid rgba(52,211,153,0.3);border-radius:1rem;padding:1.5rem;text-align:center;margin-bottom:1.25rem">
-            <div class="pulse" style="font-size:3.5rem">🏆</div>
-            <h2 style="font-family:'Orbitron',sans-serif;color:#34d399;font-size:1.4rem;margin-top:0.5rem">${winner.name}</h2>
-            <p style="color:#a89fc0;margin-top:0.3rem">Campione del Torneo!</p>
-          </div>`;
-      }
-
-      left += `
-        <div class="stats-grid">
-          <div class="stat-card"><div class="stat-val" style="color:#7c3aed">${p.length}</div><div style="font-size:0.72rem;color:#a89fc0;margin-top:0.2rem">Totali</div></div>
-          <div class="stat-card"><div class="stat-val" style="color:#34d399">${stillPlaying.length}</div><div style="font-size:0.72rem;color:#a89fc0;margin-top:0.2rem">Attivi</div></div>
-          <div class="stat-card"><div class="stat-val" style="color:#fbbf24">${currentRound}</div><div style="font-size:0.72rem;color:#a89fc0;margin-top:0.2rem">Round</div></div>
-        </div>
-        <div class="controls">
-          ${s.status === 'registration' ? `<button class="btn btn-accent" onclick="HOST.startGame()" ${p.length < 1 ? 'disabled' : ''}>▶ INIZIA TORNEO${p.length > 0 ? ` (${p.length})` : ''}</button>` : ''}
-          ${roundComplete ? `<button class="btn btn-primary" onclick="HOST.nextRound()">▶ AVVIA ROUND ${currentRound + 1} (${advanced.length})</button>` : ''}
-          <button class="btn btn-outline" onclick="HOST.reset()">↺ RESET</button>
+        left += `<div class="card" style="margin-bottom:1.25rem">
+          <div class="section-title">📱 SCANSIONA PER PARTECIPARE</div>
+          <div class="qr-wrap">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(joinUrl)}&bgcolor=ffffff&color=000000&qzone=1"
+                 style="border-radius:0.75rem;background:#fff;padding:0.5rem" width="220" height="220"/>
+            <p style="color:#7c3aed;font-family:'Orbitron',sans-serif;font-weight:700;font-size:1.1rem">${s.code}</p>
+            <p style="font-size:0.68rem;color:#a89fc0;word-break:break-all;text-align:center;max-width:240px">${joinUrl}</p>
+          </div>
         </div>`;
+      }
+      if (winner) {
+        left += `<div style="background:linear-gradient(135deg,rgba(52,211,153,0.08),rgba(124,58,237,0.08));border:1px solid rgba(52,211,153,0.3);border-radius:1rem;padding:1.5rem;text-align:center;margin-bottom:1.25rem">
+          <div class="pulse" style="font-size:3.5rem">🏆</div>
+          <h2 style="font-family:'Orbitron',sans-serif;color:#34d399;font-size:1.4rem;margin-top:0.5rem">${winner.name}</h2>
+          <p style="color:#a89fc0;margin-top:0.3rem">Campione del Torneo!</p>
+        </div>`;
+      }
+      left += `<div class="stats-grid">
+        <div class="stat-card"><div class="stat-val" style="color:#7c3aed">${p.length}</div><div style="font-size:0.72rem;color:#a89fc0;margin-top:0.2rem">Totali</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:#34d399">${playing.length}</div><div style="font-size:0.72rem;color:#a89fc0;margin-top:0.2rem">Attivi</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:#fbbf24">${cur}</div><div style="font-size:0.72rem;color:#a89fc0;margin-top:0.2rem">Round</div></div>
+      </div>
+      <div class="controls">
+        ${s.status==='registration' ? `<button class="btn btn-accent" onclick="HOST.startGame()" ${p.length<1?'disabled':''}>▶ INIZIA TORNEO${p.length>0?` (${p.length})`:''}</button>` : ''}
+        ${roundComplete ? `<button class="btn btn-primary" onclick="HOST.nextRound()">▶ AVVIA ROUND ${cur+1} (${advanced.length})</button>` : ''}
+        <button class="btn btn-outline" onclick="HOST.reset()">↺ RESET</button>
+      </div>`;
 
       const rows = sorted.length === 0
         ? `<p style="text-align:center;color:#a89fc0;padding:2rem;font-size:0.85rem">Nessun giocatore registrato</p>`
@@ -201,45 +157,45 @@
             </div>`;
           }).join('');
 
-      this.render(`
-        <div class="grid-2">
-          <div>${left}</div>
-          <div class="card">
-            <div class="section-title">👥 GIOCATORI (${p.length})</div>
-            <div class="players-list">${rows}</div>
-          </div>
-        </div>`);
+      this.wrap(`<div class="grid-2">
+        <div>${left}</div>
+        <div class="card">
+          <div class="section-title">👥 GIOCATORI (${p.length})</div>
+          <div class="players-list">${rows}</div>
+        </div>
+      </div>`);
     },
 
     async createSession() {
-      this.render(`<div style="text-align:center"><div class="spinner"></div></div>`);
+      this.wrap(`<div class="loading-center"><div class="spinner"></div></div>`);
       const code = Math.random().toString(36).substring(2,8).toUpperCase();
-      this.session = await apiPost('GameSession', { code, status:'registration', current_round:1, total_players:0, active_players:0 });
-      localStorage.setItem('rps_host_session_id', this.session.id);
+      const { session } = await api('createSession', { code });
+      this.session = session;
+      localStorage.setItem('rps_host_session_id', session.id);
       this.startPolling();
       this.showMain();
     },
 
     async startGame() {
       const waiting = this.players.filter(p => p.status === 'waiting');
-      for (const p of waiting) await callGame('updatePlayer', { id: p.id, data: { status:'playing', current_round:1, round_wins:0, round_losses:0 } });
-      await apiPatch(`GameSession/${this.session.id}`, { status:'playing', total_players:waiting.length, active_players:waiting.length });
+      for (const p of waiting) await api('updatePlayer', { id: p.id, data: { status:'playing', current_round:1, round_wins:0, round_losses:0 } });
+      await api('updateSession', { id: this.session.id, data: { status:'playing', total_players:waiting.length, active_players:waiting.length } });
       await this.refresh(); this.showMain();
     },
 
     async nextRound() {
       const cur = this.session.current_round || 1;
-      const eligible = this.players.filter(p => p.status === 'waiting' && (p.current_round||1) > cur);
-      for (const p of eligible) await callGame('updatePlayer', { id: p.id, data: { status:'playing', round_wins:0, round_losses:0 } });
-      await apiPatch(`GameSession/${this.session.id}`, { current_round: cur+1, active_players: eligible.length });
+      const eligible = this.players.filter(p => p.status==='waiting' && (p.current_round||1) > cur);
+      for (const p of eligible) await api('updatePlayer', { id: p.id, data: { status:'playing', round_wins:0, round_losses:0 } });
+      await api('updateSession', { id: this.session.id, data: { current_round: cur+1, active_players: eligible.length } });
       await this.refresh(); this.showMain();
     },
 
     async reset() {
       if (!confirm('Resettare il torneo?')) return;
-      this.render(`<div style="text-align:center"><div class="spinner"></div></div>`);
-      for (const p of this.players) await apiDelete(`Player/${p.id}`);
-      if (this.session) await apiDelete(`GameSession/${this.session.id}`);
+      this.wrap(`<div class="loading-center"><div class="spinner"></div></div>`);
+      for (const p of this.players) await api('deletePlayer', { id: p.id });
+      if (this.session) await api('deleteSession', { id: this.session.id });
       localStorage.removeItem('rps_host_session_id');
       this.session = null; this.players = [];
       if (this.poll) clearInterval(this.poll);
@@ -248,21 +204,20 @@
 
     async refresh() {
       if (!this.session) return;
-      const [sd, pd] = await Promise.all([
-        apiGet(`GameSession?filter={"id":"${this.session.id}"}`),
-        apiGet(`Player?filter={"session_code":"${this.session.code"}"}`)
+      const [sr, pr] = await Promise.all([
+        api('getSessionById', { id: this.session.id }),
+        api('getPlayers', { session_code: this.session.code })
       ]);
-      this.session = Array.isArray(sd) ? sd[0] : sd;
-      this.players = Array.isArray(pd) ? pd : [];
+      this.session = sr.session;
+      this.players = pr.players || [];
 
-      // Auto-winner
       if (this.session?.status === 'playing') {
-        const sp = this.players.filter(p => p.status === 'playing');
-        const el = this.players.filter(p => p.status === 'eliminated');
-        const wt = this.players.filter(p => p.status === 'waiting');
-        if (sp.length === 1 && el.length > 0 && wt.length === 0) {
-          await callGame('updatePlayer', { id: sp[0].id, data: { status:'winner' } });
-          await apiPatch(`GameSession/${this.session.id}`, { status:'finished', winner_name: sp[0].name, active_players:1 });
+        const sp = this.players.filter(p => p.status==='playing');
+        const el = this.players.filter(p => p.status==='eliminated');
+        const wt = this.players.filter(p => p.status==='waiting');
+        if (sp.length===1 && el.length>0 && wt.length===0) {
+          await api('updatePlayer', { id: sp[0].id, data: { status:'winner' } });
+          await api('updateSession', { id: this.session.id, data: { status:'finished', winner_name: sp[0].name, active_players:1 } });
           await this.refresh();
         }
       }
@@ -276,11 +231,9 @@
     async init() {
       const saved = localStorage.getItem('rps_host_session_id');
       if (saved) {
-        this.render(`<div style="text-align:center"><div class="spinner"></div></div>`);
-        const data = await apiGet(`GameSession?filter={"id":"${saved}"}`);
-        const s = Array.isArray(data) ? data[0] : null;
-        if (s) {
-          this.session = s;
+        const { session } = await api('getSessionById', { id: saved }).catch(() => ({ session: null }));
+        if (session) {
+          this.session = session;
           await this.refresh();
           this.startPolling();
           this.showMain();
@@ -295,127 +248,114 @@
   };
 
   // ══════════════════════════════════════════════════════════════
-  // PLAYER MODE  (?code=XXXX)
+  // PLAYER MODE
   // ══════════════════════════════════════════════════════════════
-
   const PLAYER = {
     playerId: null,
     player: null,
     poll: null,
     isRevealing: false,
-    handNumber: 0,
     CHOICES: ["rock","paper","scissors"],
     EMOJI: { rock:"🪨", paper:"📄", scissors:"✂️" },
 
-    render(html) {
-      setApp(`<div class="max-w-sm fade-in">${html}</div>`);
-    },
+    wrap(html) { setApp(`<div class="max-w-sm fade-in">${html}</div>`); },
 
     async register() {
       const name = document.getElementById("nameInput").value.trim();
       if (!name) return;
       const btn = document.getElementById("joinBtn");
       btn.disabled = true;
-      btn.innerHTML = `<span class="spinner" style="width:1rem;height:1rem;border-width:2px"></span> Iscrizione...`;
-      const data = await callGame("registerPlayer", { name, session_code: code });
-      localStorage.setItem(`rps_player_${code}`, data.player.id);
-      this.playerId = data.player.id;
-      this.player = data.player;
+      btn.innerHTML = `<div class="spinner" style="width:1rem;height:1rem;border-width:2px"></div> Iscrizione...`;
+      const { player } = await api("registerPlayer", { name, session_code: code });
+      localStorage.setItem(`rps_player_${code}`, player.id);
+      this.playerId = player.id;
+      this.player = player;
       this.startPolling();
       this.renderState();
     },
 
     renderState(pendingResult) {
       const p = this.player;
-      if (!p) { setApp(`<div class="spinner"></div>`); return; }
+      if (!p) { setApp(`<div class="loading-center"><div class="spinner"></div></div>`); return; }
 
       if (p.status === 'waiting') {
         const hasPlayed = (p.current_round||1) > 1;
-        this.render(`
-          <div class="card" style="text-align:center;padding:2.5rem">
-            <div class="pulse" style="font-size:4rem;margin-bottom:1rem">${hasPlayed ? "🎉" : "⏳"}</div>
-            <h2 style="font-family:'Orbitron',sans-serif;font-size:1.1rem;margin-bottom:0.5rem">
-              ${hasPlayed ? `Round ${(p.current_round||1)-1} Vinto!` : `Ciao, ${p.name}!`}
-            </h2>
-            <p style="color:#a89fc0;font-size:0.88rem">
-              ${hasPlayed
-                ? `Sei qualificato per il Round ${p.current_round||1}.<br>Attendi il prossimo round...`
-                : "Sei registrato! Attendi che l'host avvii il torneo..."}
-            </p>
-          </div>`);
+        this.wrap(`<div class="card" style="text-align:center;padding:2.5rem">
+          <div class="pulse" style="font-size:4rem;margin-bottom:1rem">${hasPlayed?"🎉":"⏳"}</div>
+          <h2 style="font-family:'Orbitron',sans-serif;font-size:1.1rem;margin-bottom:0.5rem">
+            ${hasPlayed ? `Round ${(p.current_round||1)-1} Vinto!` : `Ciao, ${p.name}!`}
+          </h2>
+          <p style="color:#a89fc0;font-size:0.88rem">
+            ${hasPlayed ? `Sei qualificato per il Round ${p.current_round||1}.<br>Attendi il prossimo round...` : "Sei registrato! Attendi che l'host avvii il torneo..."}
+          </p>
+        </div>`);
         return;
       }
-
       if (p.status === 'eliminated') {
-        this.render(`
-          <div class="card" style="text-align:center;padding:2.5rem;border-color:rgba(239,68,68,0.3)">
-            <div style="font-size:4rem;margin-bottom:1rem">❌</div>
-            <h2 style="font-family:'Orbitron',sans-serif;font-size:1.5rem;color:#ef4444;margin-bottom:0.5rem">ELIMINATO</h2>
-            <p style="color:#a89fc0">Mi dispiace, ${p.name}! Hai perso 3 mani.</p>
-            <div style="margin-top:1rem;font-size:0.82rem;color:#a89fc0">
-              Round raggiunto: <strong style="color:#f0eefa">${p.current_round||1}</strong><br>
-              Vittorie totali: <strong style="color:#34d399">${p.wins||0}</strong>
-            </div>
-          </div>`);
+        this.wrap(`<div class="card" style="text-align:center;padding:2.5rem;border-color:rgba(239,68,68,0.3)">
+          <div style="font-size:4rem;margin-bottom:1rem">❌</div>
+          <h2 style="font-family:'Orbitron',sans-serif;font-size:1.5rem;color:#ef4444;margin-bottom:0.5rem">ELIMINATO</h2>
+          <p style="color:#a89fc0">Mi dispiace, ${p.name}! Hai perso 3 mani.</p>
+          <div style="margin-top:1rem;font-size:0.82rem;color:#a89fc0">
+            Round raggiunto: <strong style="color:#f0eefa">${p.current_round||1}</strong><br>
+            Vittorie totali: <strong style="color:#34d399">${p.wins||0}</strong>
+          </div>
+        </div>`);
         return;
       }
-
       if (p.status === 'winner') {
-        this.render(`
-          <div class="card" style="text-align:center;padding:2.5rem;border-color:rgba(52,211,153,0.3);background:linear-gradient(135deg,rgba(52,211,153,0.05),rgba(124,58,237,0.05))">
-            <div class="pulse" style="font-size:5rem">🏆</div>
-            <h2 style="font-family:'Orbitron',sans-serif;font-size:2rem;color:#34d399;margin:0.75rem 0 0.4rem">HAI VINTO!</h2>
-            <p style="color:#a89fc0">Complimenti ${p.name}, sei il campione! 🏆</p>
-          </div>`);
+        this.wrap(`<div class="card" style="text-align:center;padding:2.5rem;border-color:rgba(52,211,153,0.3);background:linear-gradient(135deg,rgba(52,211,153,0.05),rgba(124,58,237,0.05))">
+          <div class="pulse" style="font-size:5rem">🏆</div>
+          <h2 style="font-family:'Orbitron',sans-serif;font-size:2rem;color:#34d399;margin:0.75rem 0 0.4rem">HAI VINTO!</h2>
+          <p style="color:#a89fc0">Complimenti ${p.name}, sei il campione! 🏆</p>
+        </div>`);
         return;
       }
-
       if (p.status === 'playing') {
         const wDots = Array.from({length:3},(_,i)=>`<span style="font-size:1.4rem">${i<(p.round_wins||0)?"🟢":"⚪"}</span>`).join('');
         const lDots = Array.from({length:3},(_,i)=>`<span style="font-size:1.4rem">${i<(p.round_losses||0)?"🔴":"⚪"}</span>`).join('');
-
         let center;
         if (pendingResult) {
-          const cfg = {win:['badge-result-win','HAI VINTO!'],lose:['badge-result-lose','HAI PERSO!'],draw:['badge-result-draw','PAREGGIO!']}[pendingResult.result];
-          center = `
-            <div class="card fade-in" style="text-align:center;padding:1.5rem">
-              <div style="display:flex;align-items:center;justify-content:center;gap:2rem;margin-bottom:1rem">
-                <div><span style="font-size:3rem">${this.EMOJI[pendingResult.playerChoice]}</span><p style="font-size:0.7rem;color:#a89fc0;margin-top:0.25rem">Tu</p></div>
-                <span style="font-family:'Orbitron',sans-serif;color:#a89fc0">VS</span>
-                <div><span style="font-size:3rem">${this.EMOJI[pendingResult.computerChoice]}</span><p style="font-size:0.7rem;color:#a89fc0;margin-top:0.25rem">Computer</p></div>
-              </div>
-              <span class="badge ${cfg[0]}">${cfg[1]}</span>
-            </div>`;
+          const rMap = {
+            win:  ['rgba(52,211,153,0.12)','#34d399','rgba(52,211,153,0.3)','HAI VINTO! 🎉'],
+            lose: ['rgba(239,68,68,0.12)','#ef4444','rgba(239,68,68,0.3)','HAI PERSO! 😢'],
+            draw: ['rgba(251,191,36,0.12)','#fbbf24','rgba(251,191,36,0.3)','PAREGGIO! 🤝'],
+          }[pendingResult.result];
+          center = `<div class="card fade-in" style="text-align:center;padding:1.5rem">
+            <div style="display:flex;align-items:center;justify-content:center;gap:2rem;margin-bottom:1rem">
+              <div><span style="font-size:3rem">${this.EMOJI[pendingResult.playerChoice]}</span><p style="font-size:0.7rem;color:#a89fc0;margin-top:0.25rem">Tu</p></div>
+              <span style="font-family:'Orbitron',sans-serif;color:#a89fc0">VS</span>
+              <div><span style="font-size:3rem">${this.EMOJI[pendingResult.computerChoice]}</span><p style="font-size:0.7rem;color:#a89fc0;margin-top:0.25rem">Computer</p></div>
+            </div>
+            <span style="border-radius:0.4rem;padding:0.35rem 1rem;font-size:1rem;font-family:'Orbitron',sans-serif;border:1px solid;background:${rMap[0]};color:${rMap[1]};border-color:${rMap[2]}">${rMap[3]}</span>
+          </div>`;
         } else if (this.isRevealing) {
-          center = `<div class="card" style="text-align:center;padding:2rem"><div style="font-size:3.5rem;animation:pulse 0.4s infinite;display:inline-block">✊</div></div>`;
+          center = `<div class="card" style="text-align:center;padding:2rem"><div style="font-size:3.5rem;animation:pulse-anim 0.4s infinite;display:inline-block">✊</div></div>`;
         } else {
-          center = `
-            <div class="card" style="text-align:center;padding:1.5rem">
-              <p style="color:#a89fc0;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:1rem">Scegli la tua mossa</p>
-              <div style="display:flex;gap:0.75rem;justify-content:center">
-                <button class="btn-choice" onclick="PLAYER.choose('rock')"><span style="font-size:2.5rem">🪨</span>Sasso</button>
-                <button class="btn-choice" onclick="PLAYER.choose('paper')"><span style="font-size:2.5rem">📄</span>Carta</button>
-                <button class="btn-choice" onclick="PLAYER.choose('scissors')"><span style="font-size:2.5rem">✂️</span>Forbice</button>
-              </div>
-            </div>`;
+          center = `<div class="card" style="text-align:center;padding:1.5rem">
+            <p style="color:#a89fc0;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:1rem">Scegli la tua mossa</p>
+            <div style="display:flex;gap:0.75rem;justify-content:center">
+              <button class="btn-choice" onclick="PLAYER.choose('rock')"><span style="font-size:2.5rem">🪨</span>Sasso</button>
+              <button class="btn-choice" onclick="PLAYER.choose('paper')"><span style="font-size:2.5rem">📄</span>Carta</button>
+              <button class="btn-choice" onclick="PLAYER.choose('scissors')"><span style="font-size:2.5rem">✂️</span>Forbice</button>
+            </div>
+          </div>`;
         }
-
-        this.render(`
-          <div style="display:flex;flex-direction:column;gap:1rem">
-            <div style="text-align:center">
-              <h1 class="gradient-text" style="font-size:1.5rem">MORRA CINESE</h1>
-              <p style="color:#a89fc0;font-size:0.82rem;margin-top:0.2rem">${p.name} • Al meglio di 5</p>
+        this.wrap(`<div style="display:flex;flex-direction:column;gap:1rem">
+          <div style="text-align:center">
+            <h1 class="gradient-text" style="font-size:1.5rem">MORRA CINESE</h1>
+            <p style="color:#a89fc0;font-size:0.82rem;margin-top:0.2rem">${p.name} • Al meglio di 5</p>
+          </div>
+          <div class="card" style="text-align:center;padding:1rem">
+            <p style="font-family:'Orbitron',sans-serif;font-size:0.68rem;color:#a89fc0;text-transform:uppercase;margin-bottom:0.5rem">Round ${p.current_round||1}</p>
+            <div style="display:flex;align-items:center;justify-content:center;gap:1.5rem">
+              <div><p style="font-size:0.62rem;color:#a89fc0;text-transform:uppercase;margin-bottom:0.3rem">Vittorie</p>${wDots}</div>
+              <div style="width:1px;height:2rem;background:#2a2440"></div>
+              <div><p style="font-size:0.62rem;color:#a89fc0;text-transform:uppercase;margin-bottom:0.3rem">Sconfitte</p>${lDots}</div>
             </div>
-            <div class="card" style="text-align:center;padding:1rem">
-              <p style="font-family:'Orbitron',sans-serif;font-size:0.68rem;color:#a89fc0;text-transform:uppercase;margin-bottom:0.5rem">Round ${p.current_round||1}</p>
-              <div style="display:flex;align-items:center;justify-content:center;gap:1.5rem">
-                <div><p style="font-size:0.62rem;color:#a89fc0;text-transform:uppercase;margin-bottom:0.3rem">Vittorie</p>${wDots}</div>
-                <div style="width:1px;height:2rem;background:#2a2440"></div>
-                <div><p style="font-size:0.62rem;color:#a89fc0;text-transform:uppercase;margin-bottom:0.3rem">Sconfitte</p>${lDots}</div>
-              </div>
-            </div>
-            ${center}
-          </div>`);
+          </div>
+          ${center}
+        </div>`);
       }
     },
 
@@ -424,51 +364,42 @@
       this.isRevealing = true;
       this.renderState();
       await new Promise(r => setTimeout(r, 800));
-
       const comp = this.CHOICES[Math.floor(Math.random()*3)];
       const result = choice===comp ? 'draw' : ((choice==='rock'&&comp==='scissors')||(choice==='paper'&&comp==='rock')||(choice==='scissors'&&comp==='paper')) ? 'win' : 'lose';
-
-      let rw = this.player.round_wins||0, rl = this.player.round_losses||0;
-      let w = this.player.wins||0, l = this.player.losses||0;
-      if (result==='win') { rw++; w++; }
-      else if (result==='lose') { rl++; l++; }
-
+      let rw=this.player.round_wins||0, rl=this.player.round_losses||0, w=this.player.wins||0, l=this.player.losses||0;
+      if (result==='win') { rw++; w++; } else if (result==='lose') { rl++; l++; }
       this.renderState({ playerChoice: choice, computerChoice: comp, result });
-
-      let status = this.player.status;
-      let round = this.player.current_round||1;
-      if (rw >= 3) { round++; rw=0; rl=0; status='waiting'; }
-      else if (rl >= 3) { status='eliminated'; }
-
+      let status=this.player.status, round=this.player.current_round||1;
+      if (rw>=3) { round++; rw=0; rl=0; status='waiting'; }
+      else if (rl>=3) { status='eliminated'; }
       setTimeout(async () => {
         const updated = { wins:w, losses:l, round_wins:rw, round_losses:rl, current_round:round, status };
-        await callGame('updatePlayer', { id: this.player.id, data: updated });
+        await api('updatePlayer', { id: this.player.id, data: updated });
         this.player = { ...this.player, ...updated };
-        setTimeout(() => { this.isRevealing=false; this.handNumber++; this.renderState(); }, 1500);
+        setTimeout(() => { this.isRevealing=false; this.renderState(); }, 1500);
       }, 1200);
     },
 
     startPolling() {
       if (this.poll) clearInterval(this.poll);
       this.poll = setInterval(async () => {
-        const data = await callGame('getPlayer', { id: this.playerId });
-        if (data.player) { this.player = data.player; if (!this.isRevealing) this.renderState(); }
+        const { player } = await api('getPlayer', { id: this.playerId });
+        if (player) { this.player = player; if (!this.isRevealing) this.renderState(); }
       }, 3000);
     },
 
     showRegister() {
-      this.render(`
-        <div class="card" style="padding:2rem">
-          <div style="text-align:center;margin-bottom:1.5rem">
-            <div style="font-size:3rem;margin-bottom:0.75rem">✊✋✌️</div>
-            <h1 class="gradient-text" style="font-size:1.5rem">MORRA CINESE</h1>
-            <p style="color:#a89fc0;font-size:0.82rem;margin-top:0.3rem">
-              Sessione: <span style="color:#7c3aed;font-family:'Orbitron',sans-serif;font-weight:700">${code}</span>
-            </p>
-          </div>
-          <input id="nameInput" class="input" placeholder="Il tuo nome..." maxlength="20" style="margin-bottom:1rem" />
-          <button id="joinBtn" class="btn btn-primary btn-full" disabled onclick="PLAYER.register()">➜ PARTECIPA</button>
-        </div>`);
+      this.wrap(`<div class="card" style="padding:2rem">
+        <div style="text-align:center;margin-bottom:1.5rem">
+          <div style="font-size:3rem;margin-bottom:0.75rem">✊✋✌️</div>
+          <h1 class="gradient-text" style="font-size:1.5rem">MORRA CINESE</h1>
+          <p style="color:#a89fc0;font-size:0.82rem;margin-top:0.3rem">
+            Sessione: <span style="color:#7c3aed;font-family:'Orbitron',sans-serif;font-weight:700">${code}</span>
+          </p>
+        </div>
+        <input id="nameInput" class="input" placeholder="Il tuo nome..." maxlength="20" style="margin-bottom:1rem"/>
+        <button id="joinBtn" class="btn btn-primary btn-full" disabled onclick="PLAYER.register()">➜ PARTECIPA</button>
+      </div>`);
       const inp = document.getElementById("nameInput");
       inp.addEventListener("input", () => { document.getElementById("joinBtn").disabled = !inp.value.trim(); });
       inp.addEventListener("keydown", e => { if(e.key==="Enter") document.getElementById("joinBtn").click(); });
@@ -478,11 +409,10 @@
     async init() {
       const saved = localStorage.getItem(`rps_player_${code}`);
       if (saved) {
-        setApp(`<div class="spinner"></div>`);
-        const data = await callGame('getPlayer', { id: saved });
-        if (data.player) {
+        const { player } = await api('getPlayer', { id: saved }).catch(() => ({ player: null }));
+        if (player) {
           this.playerId = saved;
-          this.player = data.player;
+          this.player = player;
           this.startPolling();
           this.renderState();
         } else {
@@ -496,11 +426,7 @@
   };
 
   // ── ROUTER ────────────────────────────────────────────────────
-  if (code) {
-    PLAYER.init();
-  } else {
-    HOST.init();
-  }
+  if (code) { PLAYER.init(); } else { HOST.init(); }
 </script>
 </body>
 </html>
