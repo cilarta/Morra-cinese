@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Morra Cinese</title>
   <link href__="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Space Grotesk', sans-serif; background: #0d0b14; color: #f0eefa; min-height: 100vh; }
@@ -81,7 +82,6 @@
   const HOST = {
     session: null, players: [], poll: null, initialized: false,
 
-    // Renders the full layout ONCE, then patches via updateDynamic()
     renderShell() {
       const s = this.session;
       const joinUrl = `${GITHUB_URL}/?code=${s.code}`;
@@ -121,7 +121,6 @@
       this.updateDynamic();
     },
 
-    // Only updates the parts that change on every poll
     updateDynamic() {
       const s = this.session, p = this.players;
       if (!s || !this.initialized) return;
@@ -132,7 +131,6 @@
       const roundComplete = s.status === 'playing' && playing.length === 0 && !winner;
       const advanced = p.filter(x => x.status === 'waiting' && (x.current_round||1) > cur);
 
-      // Stats
       const stTotal = document.getElementById('stat-total');
       const stActive = document.getElementById('stat-active');
       const stRound  = document.getElementById('stat-round');
@@ -140,7 +138,6 @@
       if (stActive) stActive.textContent = playing.length;
       if (stRound)  stRound.textContent  = cur;
 
-      // Winner block
       const wb = document.getElementById('winner-block');
       if (wb) {
         if (winner) {
@@ -154,7 +151,6 @@
         }
       }
 
-      // Controls
       const cb = document.getElementById('controls-block');
       if (cb) {
         let ctrl = '';
@@ -168,7 +164,6 @@
         cb.innerHTML = ctrl;
       }
 
-      // Players list
       const pl = document.getElementById('players-list');
       const pt = document.getElementById('players-title');
       if (pt) pt.textContent = `👥 GIOCATORI (${p.length})`;
@@ -225,7 +220,6 @@
       const waiting = this.players.filter(p => p.status === 'waiting');
       for (const p of waiting) await api('updatePlayer', { id: p.id, data: { status:'playing', current_round:1, round_wins:0, round_losses:0 } });
       await api('updateSession', { id: this.session.id, data: { status:'playing', total_players:waiting.length, active_players:waiting.length } });
-      // Hide QR block and re-render shell since layout changes
       await this.refresh();
       this.renderShell();
     },
@@ -258,7 +252,6 @@
       ]);
       this.session = sr.session;
       this.players = pr.players || [];
-      // Auto-winner check
       if (this.session?.status === 'playing') {
         const sp = this.players.filter(p => p.status==='playing');
         const el = this.players.filter(p => p.status==='eliminated');
@@ -275,7 +268,7 @@
       if (this.poll) clearInterval(this.poll);
       this.poll = setInterval(async () => {
         await this.refresh();
-        this.updateDynamic(); // Only patch DOM, no full re-render
+        this.updateDynamic();
       }, 3000);
     },
 
@@ -303,7 +296,7 @@
   // ══════════════════════════════════════════════════════════════
   const PLAYER = {
     playerId: null, player: null, poll: null, isRevealing: false,
-    currentScreen: null, // 'waiting' | 'eliminated' | 'winner' | 'playing' | 'register'
+    currentScreen: null,
     CHOICES: ["rock","paper","scissors"],
     EMOJI: { rock:"🪨", paper:"📄", scissors:"✂️" },
 
@@ -313,18 +306,15 @@
 
       const newScreen = p.status;
 
-      // Only re-render full layout if screen type changes
       if (newScreen !== this.currentScreen) {
         this.currentScreen = newScreen;
         this._renderFull(p, pendingResult);
         return;
       }
 
-      // Same screen: patch only dynamic parts
       if (p.status === 'playing') {
         this._patchPlayingScreen(p, pendingResult);
       }
-      // waiting/eliminated/winner screens are static, no patch needed
     },
 
     _renderFull(p, pendingResult) {
@@ -365,10 +355,18 @@
             <p style="color:#a89fc0">Complimenti ${p.name}, sei il campione! 🏆</p>
           </div>
         </div>`;
+        (function fireConfetti() {
+          const end = Date.now() + 4000;
+          const colors = ['#7c3aed','#34d399','#fbbf24','#f0eefa'];
+          (function frame() {
+            confetti({ particleCount: 6, angle: 60,  spread: 55, origin: { x: 0 }, colors });
+            confetti({ particleCount: 6, angle: 120, spread: 55, origin: { x: 1 }, colors });
+            if (Date.now() < end) requestAnimationFrame(frame);
+          })();
+        })();
         return;
       }
       if (p.status === 'playing') {
-        // Render the playing shell once
         document.getElementById("app").innerHTML = `<div class="max-w-sm fade-in" id="playing-shell">
           <div style="text-align:center;margin-bottom:1rem">
             <h1 class="gradient-text" style="font-size:1.5rem">MORRA CINESE</h1>
@@ -393,7 +391,7 @@
       const wd = document.getElementById('wins-dots');
       const ld = document.getElementById('losses-dots');
       const aa = document.getElementById('action-area');
-      if (!aa) return; // Layout not ready yet
+      if (!aa) return;
 
       if (rl) rl.textContent = `Round ${p.current_round||1}`;
       if (wd) wd.innerHTML = Array.from({length:3},(_,i)=>`<span style="font-size:1.4rem">${i<(p.round_wins||0)?"🟢":"⚪"}</span>`).join('');
@@ -440,7 +438,6 @@
       let w=this.player.wins||0, l=this.player.losses||0;
       if (result==='win'){rw++;w++;} else if(result==='lose'){rl++;l++;}
 
-      // Show result immediately with current (pre-save) state
       this._patchPlayingScreen(this.player, { playerChoice:choice, computerChoice:comp, result });
 
       let status=this.player.status, round=this.player.current_round||1;
@@ -452,7 +449,6 @@
         this.player = { ...this.player, ...updated };
         setTimeout(() => {
           this.isRevealing = false;
-          // If status changed, currentScreen will mismatch and trigger full re-render
           this.renderState();
         }, 1500);
       }, 1200);
@@ -461,7 +457,7 @@
     startPolling() {
       if (this.poll) clearInterval(this.poll);
       this.poll = setInterval(async () => {
-        if (this.isRevealing) return; // Don't update while animating
+        if (this.isRevealing) return;
         const { player } = await api('getPlayer', { id: this.playerId });
         if (player) {
           this.player = player;
@@ -501,7 +497,7 @@
       localStorage.setItem(`rps_player_${code}`, player.id);
       this.playerId = player.id;
       this.player = player;
-      this.currentScreen = null; // Force full render
+      this.currentScreen = null;
       this.startPolling();
       this.renderState();
     },
@@ -525,3 +521,5 @@
   // ── ROUTER ────────────────────────────────────────────────────
   if (code) { PLAYER.init(); } else { HOST.init(); }
 </script>
+</body>
+</html>
