@@ -3,317 +3,504 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Morra Cinese – Partecipa</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Morra Cinese</title>
   <link href__="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Space Grotesk', sans-serif; background: #0d0b14; color: #f0eefa; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Space Grotesk', sans-serif; background: #0d0b14; color: #f0eefa; min-height: 100vh; }
     .font-display { font-family: 'Orbitron', sans-serif; }
-    .card { background: #16121f; border: 1px solid #2a2440; border-radius: 1rem; }
-    .btn-primary { background: #7c3aed; color: #fff; border-radius: 0.75rem; padding: 0.75rem 1.5rem; font-family: 'Orbitron', sans-serif; font-size: 1rem; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .card { background: #16121f; border: 1px solid #2a2440; border-radius: 1rem; padding: 1.5rem; }
+    .btn { border: none; border-radius: 0.75rem; padding: 0.65rem 1.25rem; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; transition: all 0.2s; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: #7c3aed; color: #fff; }
     .btn-primary:hover:not(:disabled) { background: #6d28d9; }
-    .btn-choice { background: #1e1a2e; border: 2px solid #3b2f5e; border-radius: 1rem; padding: 1.25rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; transition: all 0.2s; color: #a89fc0; font-size: 0.75rem; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; letter-spacing: 0.1em; }
-    .btn-choice:hover:not(:disabled) { border-color: #7c3aed; background: rgba(124,58,237,0.1); transform: translateY(-4px); box-shadow: 0 8px 24px rgba(124,58,237,0.2); }
-    .btn-choice:disabled { opacity: 0.4; cursor: not-allowed; }
-    .input { background: #1e1a2e; border: 1px solid #2a2440; border-radius: 0.75rem; padding: 0.75rem 1rem; color: #f0eefa; font-size: 1.1rem; text-align: center; width: 100%; outline: none; font-family: 'Space Grotesk', sans-serif; box-sizing: border-box; }
+    .btn-accent { background: #059669; color: #fff; }
+    .btn-accent:hover:not(:disabled) { background: #047857; }
+    .btn-outline { background: transparent; color: #a89fc0; border: 1px solid #2a2440; }
+    .btn-outline:hover:not(:disabled) { background: #1e1a2e; }
+    .btn-full { width: 100%; padding: 0.85rem; font-size: 1rem; }
+    .input { background: #1e1a2e; border: 1px solid #2a2440; border-radius: 0.75rem; padding: 0.75rem 1rem; color: #f0eefa; font-size: 1.1rem; text-align: center; width: 100%; outline: none; font-family: 'Space Grotesk', sans-serif; }
     .input:focus { border-color: #7c3aed; }
-    .badge-win { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); color: #34d399; border-radius: 0.5rem; padding: 0.25rem 0.75rem; font-size: 0.85rem; }
-    .badge-lose { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; border-radius: 0.5rem; padding: 0.25rem 0.75rem; font-size: 0.85rem; }
-    .badge-draw { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); color: #fbbf24; border-radius: 0.5rem; padding: 0.25rem 0.75rem; font-size: 0.85rem; }
     .spinner { width: 2rem; height: 2rem; border: 4px solid #2a2440; border-top-color: #7c3aed; border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-pulse-custom { animation: pulse 2s infinite; }
-    .fade-in { animation: fadeIn 0.4s ease both; }
-    #app { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.35s ease both; }
+    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+    .pulse { animation: pulse 2s infinite; display: inline-block; }
+    #app { min-height: 100vh; padding: 1.5rem 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .max-w { max-width: 56rem; width: 100%; }
+    .max-w-sm { max-width: 24rem; width: 100%; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.25rem; }
+    .stat-card { background: #16121f; border: 1px solid #2a2440; border-radius: 0.75rem; padding: 0.9rem; text-align: center; }
+    .stat-val { font-family: 'Orbitron', sans-serif; font-size: 1.6rem; font-weight: 700; }
+    .player-row { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.75rem; border-radius: 0.75rem; border: 1px solid #2a2440; background: rgba(30,26,46,0.5); margin-bottom: 0.4rem; }
+    .badge { border-radius: 0.4rem; padding: 0.2rem 0.6rem; font-size: 0.7rem; font-family: 'Orbitron', sans-serif; border: 1px solid; white-space: nowrap; }
+    .badge-playing  { background: rgba(124,58,237,0.1); color: #a78bfa; border-color: rgba(124,58,237,0.3); }
+    .badge-waiting  { background: rgba(251,191,36,0.1);  color: #fbbf24; border-color: rgba(251,191,36,0.3); }
+    .badge-eliminated { background: rgba(239,68,68,0.1); color: #ef4444; border-color: rgba(239,68,68,0.3); opacity:.6; }
+    .badge-winner   { background: rgba(52,211,153,0.1);  color: #34d399; border-color: rgba(52,211,153,0.3); }
+    .badge-result-win  { background: rgba(52,211,153,0.12); color: #34d399; border-color: rgba(52,211,153,0.3); font-size: 1rem; padding: 0.35rem 1rem; }
+    .badge-result-lose { background: rgba(239,68,68,0.12); color: #ef4444; border-color: rgba(239,68,68,0.3); font-size: 1rem; padding: 0.35rem 1rem; }
+    .badge-result-draw { background: rgba(251,191,36,0.12); color: #fbbf24; border-color: rgba(251,191,36,0.3); font-size: 1rem; padding: 0.35rem 1rem; }
+    .controls { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.25rem; }
+    .qr-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; margin: 0.5rem 0; }
+    .players-list { max-height: 380px; overflow-y: auto; }
+    .section-title { font-family: 'Orbitron', sans-serif; font-size: 0.8rem; color: #a89fc0; margin-bottom: 0.75rem; }
+    .btn-choice { background: #1e1a2e; border: 2px solid #3b2f5e; border-radius: 1rem; padding: 1rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s; color: #a89fc0; font-size: 0.7rem; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; letter-spacing: 0.08em; }
+    .btn-choice:hover:not(:disabled) { border-color: #7c3aed; background: rgba(124,58,237,0.1); transform: translateY(-4px); }
+    .btn-choice:disabled { opacity: 0.4; cursor: not-allowed; }
+    .gradient-text { font-family: 'Orbitron', sans-serif; background: linear-gradient(90deg,#7c3aed,#34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   </style>
 </head>
 <body>
-  <div id="app">
-    <div class="spinner"></div>
-  </div>
+<div id="app"><div class="spinner"></div></div>
 
-  <script>
-    const BASE44_APP_URL = "https://arena-morph-play.base44.app";
+<script>
+  const BASE44_APP_URL = "https://arena-morph-play.base44.app";
+  const GITHUB_URL = "https://cilarta.github.io/Morra-cinese";
 
-    const CHOICES = ["rock", "paper", "scissors"];
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get("code") || "";
 
-    function getResult(player, computer) {
-      if (player === computer) return "draw";
-      if (
-        (player === "rock" && computer === "scissors") ||
-        (player === "paper" && computer === "rock") ||
-        (player === "scissors" && computer === "paper")
-      ) return "win";
-      return "lose";
-    }
+  // ── SHARED API ────────────────────────────────────────────────
 
-    async function callGame(action, params) {
-      const res = await fetch(`${BASE44_APP_URL}/api/v1/functions/publicGame`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, ...params })
-      });
-      if (!res.ok) throw new Error("Errore server");
-      return res.json();
-    }
+  async function callGame(action, params = {}) {
+    const res = await fetch(`${BASE44_APP_URL}/api/v1/functions/publicGame`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, ...params })
+    });
+    if (!res.ok) throw new Error("Errore server");
+    return res.json();
+  }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get("code") || "";
-    let pollInterval = null;
-    let isRevealing = false;
-    let player = null;
-    let handNumber = 0;
+  async function apiGet(path) {
+    const res = await fetch(`${BASE44_APP_URL}/api/v1/entities/${path}`, {
+      headers: { "Content-Type": "application/json" }
+    });
+    return res.json();
+  }
+  async function apiPost(path, body) {
+    const res = await fetch(`${BASE44_APP_URL}/api/v1/entities/${path}`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    return res.json();
+  }
+  async function apiPatch(path, body) {
+    const res = await fetch(`${BASE44_APP_URL}/api/v1/entities/${path}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    return res.json();
+  }
+  async function apiDelete(path) {
+    await fetch(`${BASE44_APP_URL}/api/v1/entities/${path}`, { method: "DELETE" });
+  }
 
-    function render(html) {
-      document.getElementById("app").innerHTML = `<div class="fade-in w-full max-w-sm">${html}</div>`;
-    }
+  function setApp(html) {
+    document.getElementById("app").innerHTML = html;
+  }
 
-    // ── SCREENS ────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════
+  // HOST MODE  (no ?code param)
+  // ══════════════════════════════════════════════════════════════
 
-    function showNoCode() {
-      render(`
-        <div class="card p-8 text-center">
-          <p style="color:#a89fc0">Nessun codice di sessione.<br>Scansiona il QR code per partecipare!</p>
+  const HOST = {
+    session: null,
+    players: [],
+    poll: null,
+
+    render(html) {
+      setApp(`
+        <div class="max-w fade-in">
+          <div style="text-align:center;margin-bottom:2rem">
+            <h1 class="gradient-text" style="font-size:2rem">✊✋✌️ MORRA CINESE</h1>
+            <p style="color:#a89fc0;margin-top:0.3rem;font-size:0.9rem">Torneo a eliminazione • Al meglio di 5</p>
+          </div>
+          ${html}
         </div>`);
-    }
+    },
 
-    function showRegister() {
-      render(`
-        <div class="card p-8">
-          <div class="text-center mb-6">
+    showStart() {
+      this.render(`
+        <div style="text-align:center">
+          <button class="btn btn-primary" style="font-size:1rem;padding:1rem 2rem" onclick="HOST.createSession()">
+            ⚡ NUOVA PARTITA
+          </button>
+        </div>`);
+    },
+
+    showMain() {
+      const s = this.session;
+      const p = this.players;
+      const currentRound = s.current_round || 1;
+      const stillPlaying = p.filter(x => x.status === 'playing');
+      const winner = p.find(x => x.status === 'winner');
+      const roundComplete = s.status === 'playing' && stillPlaying.length === 0 && !winner;
+      const advanced = p.filter(x => x.status === 'waiting' && (x.current_round || 1) > currentRound);
+      const joinUrl = `${GITHUB_URL}/?code=${s.code}`;
+      const order = { winner: 0, playing: 1, waiting: 2, eliminated: 3 };
+      const sorted = [...p].sort((a, b) => (order[a.status]||4)-(order[b.status]||4));
+
+      const badgeMap = {
+        playing:    ['badge-playing',    '⚔️ In gioco'],
+        waiting:    ['badge-waiting',    '⏳ In attesa'],
+        eliminated: ['badge-eliminated', '❌ Eliminato'],
+        winner:     ['badge-winner',     '🏆 Vincitore'],
+      };
+
+      let left = '';
+
+      if (s.status === 'registration') {
+        left += `
+          <div class="card" style="margin-bottom:1.25rem">
+            <div class="section-title">📱 SCANSIONA PER PARTECIPARE</div>
+            <div class="qr-wrap">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(joinUrl)}&bgcolor=ffffff&color=000000&qzone=1"
+                   style="border-radius:0.75rem;background:#fff;padding:0.5rem" width="220" height="220" />
+              <p style="color:#7c3aed;font-family:'Orbitron',sans-serif;font-weight:700;font-size:1.1rem">${s.code}</p>
+              <p style="font-size:0.68rem;color:#a89fc0;word-break:break-all;text-align:center;max-width:240px">${joinUrl}</p>
+            </div>
+          </div>`;
+      }
+
+      if (winner) {
+        left += `
+          <div style="background:linear-gradient(135deg,rgba(52,211,153,0.08),rgba(124,58,237,0.08));border:1px solid rgba(52,211,153,0.3);border-radius:1rem;padding:1.5rem;text-align:center;margin-bottom:1.25rem">
+            <div class="pulse" style="font-size:3.5rem">🏆</div>
+            <h2 style="font-family:'Orbitron',sans-serif;color:#34d399;font-size:1.4rem;margin-top:0.5rem">${winner.name}</h2>
+            <p style="color:#a89fc0;margin-top:0.3rem">Campione del Torneo!</p>
+          </div>`;
+      }
+
+      left += `
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-val" style="color:#7c3aed">${p.length}</div><div style="font-size:0.72rem;color:#a89fc0;margin-top:0.2rem">Totali</div></div>
+          <div class="stat-card"><div class="stat-val" style="color:#34d399">${stillPlaying.length}</div><div style="font-size:0.72rem;color:#a89fc0;margin-top:0.2rem">Attivi</div></div>
+          <div class="stat-card"><div class="stat-val" style="color:#fbbf24">${currentRound}</div><div style="font-size:0.72rem;color:#a89fc0;margin-top:0.2rem">Round</div></div>
+        </div>
+        <div class="controls">
+          ${s.status === 'registration' ? `<button class="btn btn-accent" onclick="HOST.startGame()" ${p.length < 1 ? 'disabled' : ''}>▶ INIZIA TORNEO${p.length > 0 ? ` (${p.length})` : ''}</button>` : ''}
+          ${roundComplete ? `<button class="btn btn-primary" onclick="HOST.nextRound()">▶ AVVIA ROUND ${currentRound + 1} (${advanced.length})</button>` : ''}
+          <button class="btn btn-outline" onclick="HOST.reset()">↺ RESET</button>
+        </div>`;
+
+      const rows = sorted.length === 0
+        ? `<p style="text-align:center;color:#a89fc0;padding:2rem;font-size:0.85rem">Nessun giocatore registrato</p>`
+        : sorted.map(x => {
+            const [cls, lbl] = badgeMap[x.status] || badgeMap.waiting;
+            return `<div class="player-row" style="${x.status==='eliminated'?'opacity:0.5':''}">
+              <div>
+                <p style="font-size:0.88rem;font-weight:500">${x.name}</p>
+                <p style="font-size:0.7rem;color:#a89fc0">Round ${x.current_round||1} • ${x.wins||0}V / ${x.losses||0}S</p>
+              </div>
+              <span class="badge ${cls}">${lbl}</span>
+            </div>`;
+          }).join('');
+
+      this.render(`
+        <div class="grid-2">
+          <div>${left}</div>
+          <div class="card">
+            <div class="section-title">👥 GIOCATORI (${p.length})</div>
+            <div class="players-list">${rows}</div>
+          </div>
+        </div>`);
+    },
+
+    async createSession() {
+      this.render(`<div style="text-align:center"><div class="spinner"></div></div>`);
+      const code = Math.random().toString(36).substring(2,8).toUpperCase();
+      this.session = await apiPost('GameSession', { code, status:'registration', current_round:1, total_players:0, active_players:0 });
+      localStorage.setItem('rps_host_session_id', this.session.id);
+      this.startPolling();
+      this.showMain();
+    },
+
+    async startGame() {
+      const waiting = this.players.filter(p => p.status === 'waiting');
+      for (const p of waiting) await callGame('updatePlayer', { id: p.id, data: { status:'playing', current_round:1, round_wins:0, round_losses:0 } });
+      await apiPatch(`GameSession/${this.session.id}`, { status:'playing', total_players:waiting.length, active_players:waiting.length });
+      await this.refresh(); this.showMain();
+    },
+
+    async nextRound() {
+      const cur = this.session.current_round || 1;
+      const eligible = this.players.filter(p => p.status === 'waiting' && (p.current_round||1) > cur);
+      for (const p of eligible) await callGame('updatePlayer', { id: p.id, data: { status:'playing', round_wins:0, round_losses:0 } });
+      await apiPatch(`GameSession/${this.session.id}`, { current_round: cur+1, active_players: eligible.length });
+      await this.refresh(); this.showMain();
+    },
+
+    async reset() {
+      if (!confirm('Resettare il torneo?')) return;
+      this.render(`<div style="text-align:center"><div class="spinner"></div></div>`);
+      for (const p of this.players) await apiDelete(`Player/${p.id}`);
+      if (this.session) await apiDelete(`GameSession/${this.session.id}`);
+      localStorage.removeItem('rps_host_session_id');
+      this.session = null; this.players = [];
+      if (this.poll) clearInterval(this.poll);
+      this.showStart();
+    },
+
+    async refresh() {
+      if (!this.session) return;
+      const [sd, pd] = await Promise.all([
+        apiGet(`GameSession?filter={"id":"${this.session.id}"}`),
+        apiGet(`Player?filter={"session_code":"${this.session.code"}"}`)
+      ]);
+      this.session = Array.isArray(sd) ? sd[0] : sd;
+      this.players = Array.isArray(pd) ? pd : [];
+
+      // Auto-winner
+      if (this.session?.status === 'playing') {
+        const sp = this.players.filter(p => p.status === 'playing');
+        const el = this.players.filter(p => p.status === 'eliminated');
+        const wt = this.players.filter(p => p.status === 'waiting');
+        if (sp.length === 1 && el.length > 0 && wt.length === 0) {
+          await callGame('updatePlayer', { id: sp[0].id, data: { status:'winner' } });
+          await apiPatch(`GameSession/${this.session.id}`, { status:'finished', winner_name: sp[0].name, active_players:1 });
+          await this.refresh();
+        }
+      }
+    },
+
+    startPolling() {
+      if (this.poll) clearInterval(this.poll);
+      this.poll = setInterval(async () => { await this.refresh(); this.showMain(); }, 3000);
+    },
+
+    async init() {
+      const saved = localStorage.getItem('rps_host_session_id');
+      if (saved) {
+        this.render(`<div style="text-align:center"><div class="spinner"></div></div>`);
+        const data = await apiGet(`GameSession?filter={"id":"${saved}"}`);
+        const s = Array.isArray(data) ? data[0] : null;
+        if (s) {
+          this.session = s;
+          await this.refresh();
+          this.startPolling();
+          this.showMain();
+        } else {
+          localStorage.removeItem('rps_host_session_id');
+          this.showStart();
+        }
+      } else {
+        this.showStart();
+      }
+    }
+  };
+
+  // ══════════════════════════════════════════════════════════════
+  // PLAYER MODE  (?code=XXXX)
+  // ══════════════════════════════════════════════════════════════
+
+  const PLAYER = {
+    playerId: null,
+    player: null,
+    poll: null,
+    isRevealing: false,
+    handNumber: 0,
+    CHOICES: ["rock","paper","scissors"],
+    EMOJI: { rock:"🪨", paper:"📄", scissors:"✂️" },
+
+    render(html) {
+      setApp(`<div class="max-w-sm fade-in">${html}</div>`);
+    },
+
+    async register() {
+      const name = document.getElementById("nameInput").value.trim();
+      if (!name) return;
+      const btn = document.getElementById("joinBtn");
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner" style="width:1rem;height:1rem;border-width:2px"></span> Iscrizione...`;
+      const data = await callGame("registerPlayer", { name, session_code: code });
+      localStorage.setItem(`rps_player_${code}`, data.player.id);
+      this.playerId = data.player.id;
+      this.player = data.player;
+      this.startPolling();
+      this.renderState();
+    },
+
+    renderState(pendingResult) {
+      const p = this.player;
+      if (!p) { setApp(`<div class="spinner"></div>`); return; }
+
+      if (p.status === 'waiting') {
+        const hasPlayed = (p.current_round||1) > 1;
+        this.render(`
+          <div class="card" style="text-align:center;padding:2.5rem">
+            <div class="pulse" style="font-size:4rem;margin-bottom:1rem">${hasPlayed ? "🎉" : "⏳"}</div>
+            <h2 style="font-family:'Orbitron',sans-serif;font-size:1.1rem;margin-bottom:0.5rem">
+              ${hasPlayed ? `Round ${(p.current_round||1)-1} Vinto!` : `Ciao, ${p.name}!`}
+            </h2>
+            <p style="color:#a89fc0;font-size:0.88rem">
+              ${hasPlayed
+                ? `Sei qualificato per il Round ${p.current_round||1}.<br>Attendi il prossimo round...`
+                : "Sei registrato! Attendi che l'host avvii il torneo..."}
+            </p>
+          </div>`);
+        return;
+      }
+
+      if (p.status === 'eliminated') {
+        this.render(`
+          <div class="card" style="text-align:center;padding:2.5rem;border-color:rgba(239,68,68,0.3)">
+            <div style="font-size:4rem;margin-bottom:1rem">❌</div>
+            <h2 style="font-family:'Orbitron',sans-serif;font-size:1.5rem;color:#ef4444;margin-bottom:0.5rem">ELIMINATO</h2>
+            <p style="color:#a89fc0">Mi dispiace, ${p.name}! Hai perso 3 mani.</p>
+            <div style="margin-top:1rem;font-size:0.82rem;color:#a89fc0">
+              Round raggiunto: <strong style="color:#f0eefa">${p.current_round||1}</strong><br>
+              Vittorie totali: <strong style="color:#34d399">${p.wins||0}</strong>
+            </div>
+          </div>`);
+        return;
+      }
+
+      if (p.status === 'winner') {
+        this.render(`
+          <div class="card" style="text-align:center;padding:2.5rem;border-color:rgba(52,211,153,0.3);background:linear-gradient(135deg,rgba(52,211,153,0.05),rgba(124,58,237,0.05))">
+            <div class="pulse" style="font-size:5rem">🏆</div>
+            <h2 style="font-family:'Orbitron',sans-serif;font-size:2rem;color:#34d399;margin:0.75rem 0 0.4rem">HAI VINTO!</h2>
+            <p style="color:#a89fc0">Complimenti ${p.name}, sei il campione! 🏆</p>
+          </div>`);
+        return;
+      }
+
+      if (p.status === 'playing') {
+        const wDots = Array.from({length:3},(_,i)=>`<span style="font-size:1.4rem">${i<(p.round_wins||0)?"🟢":"⚪"}</span>`).join('');
+        const lDots = Array.from({length:3},(_,i)=>`<span style="font-size:1.4rem">${i<(p.round_losses||0)?"🔴":"⚪"}</span>`).join('');
+
+        let center;
+        if (pendingResult) {
+          const cfg = {win:['badge-result-win','HAI VINTO!'],lose:['badge-result-lose','HAI PERSO!'],draw:['badge-result-draw','PAREGGIO!']}[pendingResult.result];
+          center = `
+            <div class="card fade-in" style="text-align:center;padding:1.5rem">
+              <div style="display:flex;align-items:center;justify-content:center;gap:2rem;margin-bottom:1rem">
+                <div><span style="font-size:3rem">${this.EMOJI[pendingResult.playerChoice]}</span><p style="font-size:0.7rem;color:#a89fc0;margin-top:0.25rem">Tu</p></div>
+                <span style="font-family:'Orbitron',sans-serif;color:#a89fc0">VS</span>
+                <div><span style="font-size:3rem">${this.EMOJI[pendingResult.computerChoice]}</span><p style="font-size:0.7rem;color:#a89fc0;margin-top:0.25rem">Computer</p></div>
+              </div>
+              <span class="badge ${cfg[0]}">${cfg[1]}</span>
+            </div>`;
+        } else if (this.isRevealing) {
+          center = `<div class="card" style="text-align:center;padding:2rem"><div style="font-size:3.5rem;animation:pulse 0.4s infinite;display:inline-block">✊</div></div>`;
+        } else {
+          center = `
+            <div class="card" style="text-align:center;padding:1.5rem">
+              <p style="color:#a89fc0;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:1rem">Scegli la tua mossa</p>
+              <div style="display:flex;gap:0.75rem;justify-content:center">
+                <button class="btn-choice" onclick="PLAYER.choose('rock')"><span style="font-size:2.5rem">🪨</span>Sasso</button>
+                <button class="btn-choice" onclick="PLAYER.choose('paper')"><span style="font-size:2.5rem">📄</span>Carta</button>
+                <button class="btn-choice" onclick="PLAYER.choose('scissors')"><span style="font-size:2.5rem">✂️</span>Forbice</button>
+              </div>
+            </div>`;
+        }
+
+        this.render(`
+          <div style="display:flex;flex-direction:column;gap:1rem">
+            <div style="text-align:center">
+              <h1 class="gradient-text" style="font-size:1.5rem">MORRA CINESE</h1>
+              <p style="color:#a89fc0;font-size:0.82rem;margin-top:0.2rem">${p.name} • Al meglio di 5</p>
+            </div>
+            <div class="card" style="text-align:center;padding:1rem">
+              <p style="font-family:'Orbitron',sans-serif;font-size:0.68rem;color:#a89fc0;text-transform:uppercase;margin-bottom:0.5rem">Round ${p.current_round||1}</p>
+              <div style="display:flex;align-items:center;justify-content:center;gap:1.5rem">
+                <div><p style="font-size:0.62rem;color:#a89fc0;text-transform:uppercase;margin-bottom:0.3rem">Vittorie</p>${wDots}</div>
+                <div style="width:1px;height:2rem;background:#2a2440"></div>
+                <div><p style="font-size:0.62rem;color:#a89fc0;text-transform:uppercase;margin-bottom:0.3rem">Sconfitte</p>${lDots}</div>
+              </div>
+            </div>
+            ${center}
+          </div>`);
+      }
+    },
+
+    async choose(choice) {
+      if (this.isRevealing || !this.player || this.player.status !== 'playing') return;
+      this.isRevealing = true;
+      this.renderState();
+      await new Promise(r => setTimeout(r, 800));
+
+      const comp = this.CHOICES[Math.floor(Math.random()*3)];
+      const result = choice===comp ? 'draw' : ((choice==='rock'&&comp==='scissors')||(choice==='paper'&&comp==='rock')||(choice==='scissors'&&comp==='paper')) ? 'win' : 'lose';
+
+      let rw = this.player.round_wins||0, rl = this.player.round_losses||0;
+      let w = this.player.wins||0, l = this.player.losses||0;
+      if (result==='win') { rw++; w++; }
+      else if (result==='lose') { rl++; l++; }
+
+      this.renderState({ playerChoice: choice, computerChoice: comp, result });
+
+      let status = this.player.status;
+      let round = this.player.current_round||1;
+      if (rw >= 3) { round++; rw=0; rl=0; status='waiting'; }
+      else if (rl >= 3) { status='eliminated'; }
+
+      setTimeout(async () => {
+        const updated = { wins:w, losses:l, round_wins:rw, round_losses:rl, current_round:round, status };
+        await callGame('updatePlayer', { id: this.player.id, data: updated });
+        this.player = { ...this.player, ...updated };
+        setTimeout(() => { this.isRevealing=false; this.handNumber++; this.renderState(); }, 1500);
+      }, 1200);
+    },
+
+    startPolling() {
+      if (this.poll) clearInterval(this.poll);
+      this.poll = setInterval(async () => {
+        const data = await callGame('getPlayer', { id: this.playerId });
+        if (data.player) { this.player = data.player; if (!this.isRevealing) this.renderState(); }
+      }, 3000);
+    },
+
+    showRegister() {
+      this.render(`
+        <div class="card" style="padding:2rem">
+          <div style="text-align:center;margin-bottom:1.5rem">
             <div style="font-size:3rem;margin-bottom:0.75rem">✊✋✌️</div>
-            <h1 class="font-display" style="font-size:1.5rem;background:linear-gradient(90deg,#7c3aed,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent">MORRA CINESE</h1>
-            <p style="color:#a89fc0;font-size:0.85rem;margin-top:0.25rem">
-              Sessione: <span class="font-display" style="color:#7c3aed;font-weight:bold">${code}</span>
+            <h1 class="gradient-text" style="font-size:1.5rem">MORRA CINESE</h1>
+            <p style="color:#a89fc0;font-size:0.82rem;margin-top:0.3rem">
+              Sessione: <span style="color:#7c3aed;font-family:'Orbitron',sans-serif;font-weight:700">${code}</span>
             </p>
           </div>
           <input id="nameInput" class="input" placeholder="Il tuo nome..." maxlength="20" style="margin-bottom:1rem" />
-          <button id="joinBtn" class="btn-primary" disabled>➜ PARTECIPA</button>
+          <button id="joinBtn" class="btn btn-primary btn-full" disabled onclick="PLAYER.register()">➜ PARTECIPA</button>
         </div>`);
+      const inp = document.getElementById("nameInput");
+      inp.addEventListener("input", () => { document.getElementById("joinBtn").disabled = !inp.value.trim(); });
+      inp.addEventListener("keydown", e => { if(e.key==="Enter") document.getElementById("joinBtn").click(); });
+      inp.focus();
+    },
 
-      const input = document.getElementById("nameInput");
-      const btn = document.getElementById("joinBtn");
-      input.addEventListener("input", () => { btn.disabled = !input.value.trim(); });
-      input.addEventListener("keydown", (e) => { if (e.key === "Enter") btn.click(); });
-      btn.addEventListener("click", async () => {
-        if (!input.value.trim()) return;
-        btn.disabled = true;
-        btn.innerHTML = `<span class="spinner" style="width:1.2rem;height:1.2rem;border-width:3px"></span> Iscrizione...`;
-        const data = await callGame("registerPlayer", { name: input.value.trim(), session_code: code });
-        localStorage.setItem(`rps_player_${code}`, data.player.id);
-        player = data.player;
-        startPolling(data.player.id);
-        renderPlayerState();
-      });
-      input.focus();
-    }
-
-    function showLoading() {
-      document.getElementById("app").innerHTML = `<div class="spinner"></div>`;
-    }
-
-    function showWaiting() {
-      const hasPlayed = (player.current_round || 1) > 1;
-      render(`
-        <div class="card p-8 text-center">
-          <div class="animate-pulse-custom" style="font-size:4rem;margin-bottom:1rem">${hasPlayed ? "🎉" : "⏳"}</div>
-          <h2 class="font-display" style="font-size:1.2rem;margin-bottom:0.5rem">
-            ${hasPlayed ? `Round ${(player.current_round || 1) - 1} Vinto!` : `Ciao, ${player.name}!`}
-          </h2>
-          <p style="color:#a89fc0">
-            ${hasPlayed
-              ? `Sei qualificato per il Round ${player.current_round || 1}.<br>Attendi che l'host avvii il prossimo round...`
-              : "Sei registrato! Attendi che l'host avvii il torneo..."}
-          </p>
-        </div>`);
-    }
-
-    function showEliminated() {
-      render(`
-        <div class="card p-8 text-center" style="border-color:rgba(239,68,68,0.3)">
-          <div style="font-size:4rem;margin-bottom:1rem">❌</div>
-          <h2 class="font-display" style="font-size:1.5rem;color:#ef4444;margin-bottom:0.5rem">ELIMINATO</h2>
-          <p style="color:#a89fc0">Mi dispiace, ${player.name}! Hai perso 3 mani.</p>
-          <div style="margin-top:1rem;font-size:0.85rem;color:#a89fc0">
-            Round raggiunto: <strong style="color:#f0eefa">${player.current_round || 1}</strong><br>
-            Vittorie totali: <strong style="color:#34d399">${player.wins || 0}</strong>
-          </div>
-        </div>`);
-    }
-
-    function showWinner() {
-      render(`
-        <div class="card p-8 text-center" style="border-color:rgba(52,211,153,0.3);background:linear-gradient(135deg,rgba(52,211,153,0.05),rgba(124,58,237,0.05))">
-          <div style="font-size:5rem;margin-bottom:1rem;animation:pulse 2s infinite">🏆</div>
-          <h2 class="font-display" style="font-size:2rem;color:#34d399;margin-bottom:0.5rem">HAI VINTO!</h2>
-          <p style="color:#a89fc0">Complimenti ${player.name}, sei il campione! 🏆</p>
-        </div>`);
-    }
-
-    function showPlaying(pendingResult) {
-      const winsHtml = Array.from({length: 3}, (_, i) =>
-        `<span style="font-size:1.5rem">${i < (player.round_wins || 0) ? "🟢" : "⚪"}</span>`).join("");
-      const lossesHtml = Array.from({length: 3}, (_, i) =>
-        `<span style="font-size:1.5rem">${i < (player.round_losses || 0) ? "🔴" : "⚪"}</span>`).join("");
-
-      let centerHtml;
-      if (pendingResult) {
-        const EMOJI = { rock: "🪨", paper: "📄", scissors: "✂️" };
-        const cfg = {
-          win:  { text: "HAI VINTO!", cls: "badge-win" },
-          lose: { text: "HAI PERSO!", cls: "badge-lose" },
-          draw: { text: "PAREGGIO!",  cls: "badge-draw" },
-        }[pendingResult.result];
-        centerHtml = `
-          <div class="card p-6 text-center fade-in">
-            <div style="display:flex;align-items:center;justify-content:center;gap:2rem;margin-bottom:1rem">
-              <div class="text-center"><span style="font-size:3rem">${EMOJI[pendingResult.playerChoice]}</span><p style="color:#a89fc0;font-size:0.75rem;margin-top:0.25rem">Tu</p></div>
-              <span class="font-display" style="color:#a89fc0;font-size:1.2rem">VS</span>
-              <div class="text-center"><span style="font-size:3rem">${EMOJI[pendingResult.computerChoice]}</span><p style="color:#a89fc0;font-size:0.75rem;margin-top:0.25rem">Computer</p></div>
-            </div>
-            <span class="${cfg.cls} font-display" style="font-size:1.1rem">${cfg.text}</span>
-          </div>`;
-      } else if (isRevealing) {
-        centerHtml = `
-          <div class="card p-6 text-center">
-            <div style="font-size:3.5rem;animation:pulse 0.4s infinite">✊</div>
-          </div>`;
-      } else {
-        centerHtml = `
-          <div class="card p-6 text-center">
-            <p style="color:#a89fc0;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:1rem">Scegli la tua mossa</p>
-            <div style="display:flex;gap:1rem;justify-content:center">
-              <button class="btn-choice" onclick="handleChoice('rock')">
-                <span style="font-size:3rem">🪨</span>Sasso
-              </button>
-              <button class="btn-choice" onclick="handleChoice('paper')">
-                <span style="font-size:3rem">📄</span>Carta
-              </button>
-              <button class="btn-choice" onclick="handleChoice('scissors')">
-                <span style="font-size:3rem">✂️</span>Forbice
-              </button>
-            </div>
-          </div>`;
-      }
-
-      render(`
-        <div style="display:flex;flex-direction:column;gap:1.25rem">
-          <div class="text-center">
-            <h1 class="font-display" style="font-size:1.5rem;background:linear-gradient(90deg,#7c3aed,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent">MORRA CINESE</h1>
-            <p style="color:#a89fc0;font-size:0.85rem;margin-top:0.25rem">${player.name} • Al meglio di 5</p>
-          </div>
-          <div class="card p-4" style="text-align:center">
-            <p class="font-display" style="font-size:0.7rem;color:#a89fc0;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem">Round ${player.current_round || 1}</p>
-            <div style="display:flex;align-items:center;justify-content:center;gap:1.5rem">
-              <div>
-                <p style="font-size:0.65rem;color:#a89fc0;text-transform:uppercase;margin-bottom:0.25rem">Vittorie</p>
-                <div>${winsHtml}</div>
-              </div>
-              <div style="width:1px;height:2.5rem;background:#2a2440"></div>
-              <div>
-                <p style="font-size:0.65rem;color:#a89fc0;text-transform:uppercase;margin-bottom:0.25rem">Sconfitte</p>
-                <div>${lossesHtml}</div>
-              </div>
-            </div>
-          </div>
-          ${centerHtml}
-        </div>`);
-    }
-
-    // ── GAME LOGIC ─────────────────────────────────────────────
-
-    window.handleChoice = async function(choice) {
-      if (isRevealing || !player || player.status !== "playing") return;
-      isRevealing = true;
-      showPlaying(null);
-
-      await new Promise(r => setTimeout(r, 800));
-
-      const compChoice = CHOICES[Math.floor(Math.random() * 3)];
-      const handResult = getResult(choice, compChoice);
-
-      let newRoundWins = player.round_wins || 0;
-      let newRoundLosses = player.round_losses || 0;
-      let newWins = player.wins || 0;
-      let newLosses = player.losses || 0;
-
-      if (handResult === "win") { newRoundWins++; newWins++; }
-      else if (handResult === "lose") { newRoundLosses++; newLosses++; }
-
-      showPlaying({ playerChoice: choice, computerChoice: compChoice, result: handResult });
-
-      let newStatus = player.status;
-      let newRound = player.current_round || 1;
-
-      if (newRoundWins >= 3) {
-        newRound++;
-        newRoundWins = 0;
-        newRoundLosses = 0;
-        newStatus = "waiting";
-      } else if (newRoundLosses >= 3) {
-        newStatus = "eliminated";
-      }
-
-      setTimeout(async () => {
-        const updated = { wins: newWins, losses: newLosses, round_wins: newRoundWins, round_losses: newRoundLosses, current_round: newRound, status: newStatus };
-        await callGame("updatePlayer", { id: player.id, data: updated });
-        player = { ...player, ...updated };
-
-        setTimeout(() => {
-          isRevealing = false;
-          handNumber++;
-          renderPlayerState();
-        }, 1500);
-      }, 1200);
-    };
-
-    // ── POLLING & STATE ────────────────────────────────────────
-
-    function renderPlayerState(pendingResult) {
-      if (!player) { showLoading(); return; }
-      if (player.status === "waiting")    showWaiting();
-      else if (player.status === "eliminated") showEliminated();
-      else if (player.status === "winner")     showWinner();
-      else if (player.status === "playing")    showPlaying(pendingResult || null);
-    }
-
-    function startPolling(id) {
-      if (pollInterval) clearInterval(pollInterval);
-      pollInterval = setInterval(async () => {
-        const data = await callGame("getPlayer", { id });
+    async init() {
+      const saved = localStorage.getItem(`rps_player_${code}`);
+      if (saved) {
+        setApp(`<div class="spinner"></div>`);
+        const data = await callGame('getPlayer', { id: saved });
         if (data.player) {
-          player = data.player;
-          if (!isRevealing) renderPlayerState();
-        }
-      }, 3000);
-    }
-
-    // ── INIT ───────────────────────────────────────────────────
-
-    async function init() {
-      if (!code) { showNoCode(); return; }
-
-      const savedId = localStorage.getItem(`rps_player_${code}`);
-      if (savedId) {
-        showLoading();
-        const data = await callGame("getPlayer", { id: savedId });
-        if (data.player) {
-          player = data.player;
-          startPolling(savedId);
-          renderPlayerState();
+          this.playerId = saved;
+          this.player = data.player;
+          this.startPolling();
+          this.renderState();
         } else {
           localStorage.removeItem(`rps_player_${code}`);
-          showRegister();
+          this.showRegister();
         }
       } else {
-        showRegister();
+        this.showRegister();
       }
     }
+  };
 
-    init();
-  </script>
+  // ── ROUTER ────────────────────────────────────────────────────
+  if (code) {
+    PLAYER.init();
+  } else {
+    HOST.init();
+  }
+</script>
 </body>
 </html>
