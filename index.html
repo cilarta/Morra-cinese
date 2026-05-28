@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morra Cinese – Partecipa</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href__="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Space Grotesk', sans-serif; background: #0d0b14; color: #f0eefa; }
+    .font-display { font-family: 'Orbitron', sans-serif; }
+    .card { background: #16121f; border: 1px solid #2a2440; border-radius: 1rem; }
+    .btn-primary { background: #7c3aed; color: #fff; border-radius: 0.75rem; padding: 0.75rem 1.5rem; font-family: 'Orbitron', sans-serif; font-size: 1rem; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary:hover:not(:disabled) { background: #6d28d9; }
+    .btn-choice { background: #1e1a2e; border: 2px solid #3b2f5e; border-radius: 1rem; padding: 1.25rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; transition: all 0.2s; color: #a89fc0; font-size: 0.75rem; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; letter-spacing: 0.1em; }
+    .btn-choice:hover:not(:disabled) { border-color: #7c3aed; background: rgba(124,58,237,0.1); transform: translateY(-4px); box-shadow: 0 8px 24px rgba(124,58,237,0.2); }
+    .btn-choice:disabled { opacity: 0.4; cursor: not-allowed; }
+    .input { background: #1e1a2e; border: 1px solid #2a2440; border-radius: 0.75rem; padding: 0.75rem 1rem; color: #f0eefa; font-size: 1.1rem; text-align: center; width: 100%; outline: none; font-family: 'Space Grotesk', sans-serif; box-sizing: border-box; }
+    .input:focus { border-color: #7c3aed; }
+    .badge-win { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); color: #34d399; border-radius: 0.5rem; padding: 0.25rem 0.75rem; font-size: 0.85rem; }
+    .badge-lose { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; border-radius: 0.5rem; padding: 0.25rem 0.75rem; font-size: 0.85rem; }
+    .badge-draw { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); color: #fbbf24; border-radius: 0.5rem; padding: 0.25rem 0.75rem; font-size: 0.85rem; }
+    .spinner { width: 2rem; height: 2rem; border: 4px solid #2a2440; border-top-color: #7c3aed; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-pulse-custom { animation: pulse 2s infinite; }
+    .fade-in { animation: fadeIn 0.4s ease both; }
+    #app { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="spinner"></div>
+  </div>
+
+  <script>
+    // ⚠️ CAMBIA QUESTO con l'URL della tua app Base44
+    const BASE44_APP_URL = "https://YOUR_BASE44_APP_URL";
+
+    const CHOICES = ["rock", "paper", "scissors"];
+
+    function getResult(player, computer) {
+      if (player === computer) return "draw";
+      if (
+        (player === "rock" && computer === "scissors") ||
+        (player === "paper" && computer === "rock") ||
+        (player === "scissors" && computer === "paper")
+      ) return "win";
+      return "lose";
+    }
+
+    async function callGame(action, params) {
+      const res = await fetch(`${BASE44_APP_URL}/api/v1/functions/publicGame`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, ...params })
+      });
+      if (!res.ok) throw new Error("Errore server");
+      return res.json();
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get("code") || "";
+    let pollInterval = null;
+    let isRevealing = false;
+    let player = null;
+    let handNumber = 0;
+
+    function render(html) {
+      document.getElementById("app").innerHTML = `<div class="fade-in w-full max-w-sm">${html}</div>`;
+    }
+
+    // ── SCREENS ────────────────────────────────────────────────
+
+    function showNoCode() {
+      render(`
+        <div class="card p-8 text-center">
+          <p style="color:#a89fc0">Nessun codice di sessione.<br>Scansiona il QR code per partecipare!</p>
+        </div>`);
+    }
+
+    function showRegister() {
+      render(`
+        <div class="card p-8">
+          <div class="text-center mb-6">
+            <div style="font-size:3rem;margin-bottom:0.75rem">✊✋✌️</div>
+            <h1 class="font-display" style="font-size:1.5rem;background:linear-gradient(90deg,#7c3aed,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent">MORRA CINESE</h1>
+            <p style="color:#a89fc0;font-size:0.85rem;margin-top:0.25rem">
+              Sessione: <span class="font-display" style="color:#7c3aed;font-weight:bold">${code}</span>
+            </p>
+          </div>
+          <input id="nameInput" class="input" placeholder="Il tuo nome..." maxlength="20" style="margin-bottom:1rem" />
+          <button id="joinBtn" class="btn-primary" disabled>➜ PARTECIPA</button>
+        </div>`);
+
+      const input = document.getElementById("nameInput");
+      const btn = document.getElementById("joinBtn");
+      input.addEventListener("input", () => { btn.disabled = !input.value.trim(); });
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") btn.click(); });
+      btn.addEventListener("click", async () => {
+        if (!input.value.trim()) return;
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner" style="width:1.2rem;height:1.2rem;border-width:3px"></span> Iscrizione...`;
+        const data = await callGame("registerPlayer", { name: input.value.trim(), session_code: code });
+        localStorage.setItem(`rps_player_${code}`, data.player.id);
+        player = data.player;
+        startPolling(data.player.id);
+        renderPlayerState();
+      });
+      input.focus();
+    }
+
+    function showLoading() {
+      document.getElementById("app").innerHTML = `<div class="spinner"></div>`;
+    }
+
+    function showWaiting() {
+      const hasPlayed = (player.current_round || 1) > 1;
+      render(`
+        <div class="card p-8 text-center">
+          <div class="animate-pulse-custom" style="font-size:4rem;margin-bottom:1rem">${hasPlayed ? "🎉" : "⏳"}</div>
+          <h2 class="font-display" style="font-size:1.2rem;margin-bottom:0.5rem">
+            ${hasPlayed ? `Round ${(player.current_round || 1) - 1} Vinto!` : `Ciao, ${player.name}!`}
+          </h2>
+          <p style="color:#a89fc0">
+            ${hasPlayed
+              ? `Sei qualificato per il Round ${player.current_round || 1}.<br>Attendi che l'host avvii il prossimo round...`
+              : "Sei registrato! Attendi che l'host avvii il torneo..."}
+          </p>
+        </div>`);
+    }
+
+    function showEliminated() {
+      render(`
+        <div class="card p-8 text-center" style="border-color:rgba(239,68,68,0.3)">
+          <div style="font-size:4rem;margin-bottom:1rem">❌</div>
+          <h2 class="font-display" style="font-size:1.5rem;color:#ef4444;margin-bottom:0.5rem">ELIMINATO</h2>
+          <p style="color:#a89fc0">Mi dispiace, ${player.name}! Hai perso 3 mani.</p>
+          <div style="margin-top:1rem;font-size:0.85rem;color:#a89fc0">
+            Round raggiunto: <strong style="color:#f0eefa">${player.current_round || 1}</strong><br>
+            Vittorie totali: <strong style="color:#34d399">${player.wins || 0}</strong>
+          </div>
+        </div>`);
+    }
+
+    function showWinner() {
+      render(`
+        <div class="card p-8 text-center" style="border-color:rgba(52,211,153,0.3);background:linear-gradient(135deg,rgba(52,211,153,0.05),rgba(124,58,237,0.05))">
+          <div style="font-size:5rem;margin-bottom:1rem;animation:pulse 2s infinite">🏆</div>
+          <h2 class="font-display" style="font-size:2rem;color:#34d399;margin-bottom:0.5rem">HAI VINTO!</h2>
+          <p style="color:#a89fc0">Complimenti ${player.name}, sei il campione! 🏆</p>
+        </div>`);
+    }
+
+    function showPlaying(pendingResult) {
+      const winsHtml = Array.from({length: 3}, (_, i) =>
+        `<span style="font-size:1.5rem">${i < (player.round_wins || 0) ? "🟢" : "⚪"}</span>`).join("");
+      const lossesHtml = Array.from({length: 3}, (_, i) =>
+        `<span style="font-size:1.5rem">${i < (player.round_losses || 0) ? "🔴" : "⚪"}</span>`).join("");
+
+      let centerHtml;
+      if (pendingResult) {
+        const EMOJI = { rock: "🪨", paper: "📄", scissors: "✂️" };
+        const cfg = {
+          win:  { text: "HAI VINTO!", cls: "badge-win" },
+          lose: { text: "HAI PERSO!", cls: "badge-lose" },
+          draw: { text: "PAREGGIO!",  cls: "badge-draw" },
+        }[pendingResult.result];
+        centerHtml = `
+          <div class="card p-6 text-center fade-in">
+            <div style="display:flex;align-items:center;justify-content:center;gap:2rem;margin-bottom:1rem">
+              <div class="text-center"><span style="font-size:3rem">${EMOJI[pendingResult.playerChoice]}</span><p style="color:#a89fc0;font-size:0.75rem;margin-top:0.25rem">Tu</p></div>
+              <span class="font-display" style="color:#a89fc0;font-size:1.2rem">VS</span>
+              <div class="text-center"><span style="font-size:3rem">${EMOJI[pendingResult.computerChoice]}</span><p style="color:#a89fc0;font-size:0.75rem;margin-top:0.25rem">Computer</p></div>
+            </div>
+            <span class="${cfg.cls} font-display" style="font-size:1.1rem">${cfg.text}</span>
+          </div>`;
+      } else if (isRevealing) {
+        centerHtml = `
+          <div class="card p-6 text-center">
+            <div style="font-size:3.5rem;animation:pulse 0.4s infinite">✊</div>
+          </div>`;
+      } else {
+        centerHtml = `
+          <div class="card p-6 text-center">
+            <p style="color:#a89fc0;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:1rem">Scegli la tua mossa</p>
+            <div style="display:flex;gap:1rem;justify-content:center">
+              <button class="btn-choice" onclick="handleChoice('rock')">
+                <span style="font-size:3rem">🪨</span>Sasso
+              </button>
+              <button class="btn-choice" onclick="handleChoice('paper')">
+                <span style="font-size:3rem">📄</span>Carta
+              </button>
+              <button class="btn-choice" onclick="handleChoice('scissors')">
+                <span style="font-size:3rem">✂️</span>Forbice
+              </button>
+            </div>
+          </div>`;
+      }
+
+      render(`
+        <div style="display:flex;flex-direction:column;gap:1.25rem">
+          <div class="text-center">
+            <h1 class="font-display" style="font-size:1.5rem;background:linear-gradient(90deg,#7c3aed,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent">MORRA CINESE</h1>
+            <p style="color:#a89fc0;font-size:0.85rem;margin-top:0.25rem">${player.name} • Al meglio di 5</p>
+          </div>
+          <div class="card p-4" style="text-align:center">
+            <p class="font-display" style="font-size:0.7rem;color:#a89fc0;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem">Round ${player.current_round || 1}</p>
+            <div style="display:flex;align-items:center;justify-content:center;gap:1.5rem">
+              <div>
+                <p style="font-size:0.65rem;color:#a89fc0;text-transform:uppercase;margin-bottom:0.25rem">Vittorie</p>
+                <div>${winsHtml}</div>
+              </div>
+              <div style="width:1px;height:2.5rem;background:#2a2440"></div>
+              <div>
+                <p style="font-size:0.65rem;color:#a89fc0;text-transform:uppercase;margin-bottom:0.25rem">Sconfitte</p>
+                <div>${lossesHtml}</div>
+              </div>
+            </div>
+          </div>
+          ${centerHtml}
+        </div>`);
+    }
+
+    // ── GAME LOGIC ─────────────────────────────────────────────
+
+    window.handleChoice = async function(choice) {
+      if (isRevealing || !player || player.status !== "playing") return;
+      isRevealing = true;
+      showPlaying(null);
+
+      await new Promise(r => setTimeout(r, 800));
+
+      const compChoice = CHOICES[Math.floor(Math.random() * 3)];
+      const handResult = getResult(choice, compChoice);
+
+      let newRoundWins = player.round_wins || 0;
+      let newRoundLosses = player.round_losses || 0;
+      let newWins = player.wins || 0;
+      let newLosses = player.losses || 0;
+
+      if (handResult === "win") { newRoundWins++; newWins++; }
+      else if (handResult === "lose") { newRoundLosses++; newLosses++; }
+
+      showPlaying({ playerChoice: choice, computerChoice: compChoice, result: handResult });
+
+      let newStatus = player.status;
+      let newRound = player.current_round || 1;
+
+      if (newRoundWins >= 3) {
+        newRound++;
+        newRoundWins = 0;
+        newRoundLosses = 0;
+        newStatus = "waiting";
+      } else if (newRoundLosses >= 3) {
+        newStatus = "eliminated";
+      }
+
+      setTimeout(async () => {
+        const updated = { wins: newWins, losses: newLosses, round_wins: newRoundWins, round_losses: newRoundLosses, current_round: newRound, status: newStatus };
+        await callGame("updatePlayer", { id: player.id, data: updated });
+        player = { ...player, ...updated };
+
+        setTimeout(() => {
+          isRevealing = false;
+          handNumber++;
+          renderPlayerState();
+        }, 1500);
+      }, 1200);
+    };
+
+    // ── POLLING & STATE ────────────────────────────────────────
+
+    function renderPlayerState(pendingResult) {
+      if (!player) { showLoading(); return; }
+      if (player.status === "waiting")    showWaiting();
+      else if (player.status === "eliminated") showEliminated();
+      else if (player.status === "winner")     showWinner();
+      else if (player.status === "playing")    showPlaying(pendingResult || null);
+    }
+
+    function startPolling(id) {
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(async () => {
+        const data = await callGame("getPlayer", { id });
+        if (data.player) {
+          player = data.player;
+          if (!isRevealing) renderPlayerState();
+        }
+      }, 3000);
+    }
+
+    // ── INIT ───────────────────────────────────────────────────
+
+    async function init() {
+      if (!code) { showNoCode(); return; }
+
+      const savedId = localStorage.getItem(`rps_player_${code}`);
+      if (savedId) {
+        showLoading();
+        const data = await callGame("getPlayer", { id: savedId });
+        if (data.player) {
+          player = data.player;
+          startPolling(savedId);
+          renderPlayerState();
+        } else {
+          localStorage.removeItem(`rps_player_${code}`);
+          showRegister();
+        }
+      } else {
+        showRegister();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
