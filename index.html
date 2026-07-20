@@ -205,16 +205,23 @@
       this.initialized = false;
     },
 
-    async createSession() {
+async createSession() {
       document.getElementById("app").innerHTML = `<div class="center"><div class="spinner"></div></div>`;
       const code = Math.random().toString(36).substring(2,8).toUpperCase();
-      const { session } = await api('createSession', { code });
-      this.session = session;
-      this.players = [];
-      localStorage.setItem('rps_host_session_id', session.id);
-      this.renderShell();
-      this.startPolling();
-    },
+      
+      try {
+        const { session } = await api('createSession', { code });
+        this.session = session;
+        this.players = [];
+        localStorage.setItem('rps_host_session_id', session.id);
+        this.renderShell();
+        this.startPolling();
+      } catch (error) {
+        console.error("Errore di connessione API:", error);
+        alert("Errore di comunicazione con il server. Controlla la console per i dettagli.");
+        this.showStart(); // Riporta l'utente al pulsante iniziale invece di bloccarsi
+      }
+},
 
     async startGame() {
       const waiting = this.players.filter(p => p.status === 'waiting');
