@@ -4,7 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Morra Cinese</title>
-  <link href__="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Firebase Scripts (Compat Version per Realtime Database) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -55,21 +60,80 @@
 <div id="app"><div class="center"><div class="spinner"></div></div></div>
 
 <script>
-  // ── CONFIG ────────────────────────────────────────────────────
-  const FUNC_URL   = "https://arena-morph-play.base44.app/functions/publicGame";
+  // ── CONFIGURAZIONE FIREBASE ──────────────────────────────────
+  const firebaseConfig = {
+    apiKey: "AIzaSyBdcg1gpOz20nYKa8gKZYnG_tEXGaRCS3M",
+    authDomain: "morra-cinese-9bbc3.firebaseapp.com",
+    databaseURL: "https://morra-cinese-9bbc3-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "morra-cinese-9bbc3",
+    storageBucket: "morra-cinese-9bbc3.firebasestorage.app",
+    messagingSenderId: "708963074870",
+    appId: "1:708963074870:web:1cc33f99a0b1b6eb6de997"
+  };
+
+  // Inizializza Firebase
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const db = firebase.database();
+  
   const GITHUB_URL = "https://cilarta.github.io/Morra-cinese";
 
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get("code") || "";
 
+  // ── FIREBASE API ROUTER (REALTIME DATABASE) ──────────────────
   async function api(action, params = {}) {
-    const res = await fetch(FUNC_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, ...params })
-    });
-    if (!res.ok) throw new Error(`Errore ${res.status}`);
-    return res.json();
+    try {
+      if (action === 'createSession') {
+        const newSession = { id: params.code, code: params.code, status: 'registration', current_round: 1, active_players: 0, total_players: 0 };
+        await db.ref("sessions/" + params.code).set(newSession);
+        return { session: newSession };
+      } 
+      else if (action === 'getSessionById') {
+        const snapshot = await db.ref("sessions/" + params.id).once("value");
+        return { session: snapshot.exists() ? snapshot.val() : null };
+      } 
+      else if (action === 'updateSession') {
+        await db.ref("sessions/" + params.id).update(params.data);
+        return { success: true };
+      } 
+      else if (action === 'deleteSession') {
+        await db.ref("sessions/" + params.id).remove();
+        return { success: true };
+      } 
+      else if (action === 'registerPlayer') {
+        const pId = Math.random().toString(36).substring(2,10);
+        const pData = { id: pId, name: params.name, session_code: params.session_code, status: 'waiting', current_round: 1, wins: 0, losses: 0, round_wins: 0, round_losses: 0 };
+        await db.ref("players/" + pId).set(pData);
+        return { player: pData };
+      } 
+      else if (action === 'getPlayer') {
+        const snapshot = await db.ref("players/" + params.id).once("value");
+        return { player: snapshot.exists() ? snapshot.val() : null };
+      } 
+      else if (action === 'getPlayers') {
+        const snapshot = await db.ref("players").orderByChild("session_code").equalTo(params.session_code).once("value");
+        const players = [];
+        if (snapshot.exists()) {
+          snapshot.forEach(childSnapshot => {
+            players.push(childSnapshot.val());
+          });
+        }
+        return { players };
+      } 
+      else if (action === 'updatePlayer') {
+        await db.ref("players/" + params.id).update(params.data);
+        return { success: true };
+      } 
+      else if (action === 'deletePlayer') {
+        await db.ref("players/" + params.id).remove();
+        return { success: true };
+      }
+    } catch (error) {
+      console.error("Firebase API Error:", error);
+      throw error;
+    }
   }
 
   function setHTML(el, html) {
@@ -205,10 +269,9 @@
       this.initialized = false;
     },
 
-async createSession() {
+    async createSession() {
       document.getElementById("app").innerHTML = `<div class="center"><div class="spinner"></div></div>`;
       const code = Math.random().toString(36).substring(2,8).toUpperCase();
-      
       try {
         const { session } = await api('createSession', { code });
         this.session = session;
@@ -218,10 +281,10 @@ async createSession() {
         this.startPolling();
       } catch (error) {
         console.error("Errore di connessione API:", error);
-        alert("Errore di comunicazione con il server. Controlla la console per i dettagli.");
-        this.showStart(); // Riporta l'utente al pulsante iniziale invece di bloccarsi
+        alert("Errore di comunicazione con Firebase. Controlla le regole e i dati di configurazione.");
+        this.showStart(); 
       }
-},
+    },
 
     async startGame() {
       const waiting = this.players.filter(p => p.status === 'waiting');
@@ -500,13 +563,20 @@ async createSession() {
       const btn = document.getElementById("joinBtn");
       btn.disabled = true;
       btn.innerHTML = `<div class="spinner" style="width:1rem;height:1rem;border-width:2px"></div> Iscrizione...`;
-      const { player } = await api("registerPlayer", { name, session_code: code });
-      localStorage.setItem(`rps_player_${code}`, player.id);
-      this.playerId = player.id;
-      this.player = player;
-      this.currentScreen = null;
-      this.startPolling();
-      this.renderState();
+      try {
+        const { player } = await api("registerPlayer", { name, session_code: code });
+        localStorage.setItem(`rps_player_${code}`, player.id);
+        this.playerId = player.id;
+        this.player = player;
+        this.currentScreen = null;
+        this.startPolling();
+        this.renderState();
+      } catch (error) {
+        console.error("Errore di registrazione API:", error);
+        alert("Errore di comunicazione con Firebase durante la registrazione.");
+        btn.disabled = false;
+        btn.innerHTML = `➜ PARTECIPA`;
+      }
     },
 
     async init() {
